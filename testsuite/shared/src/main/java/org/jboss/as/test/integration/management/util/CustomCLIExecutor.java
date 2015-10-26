@@ -30,11 +30,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.jboss.as.test.shared.TestSuiteEnvironment;
@@ -63,9 +63,7 @@ public class CustomCLIExecutor {
 
     private static Logger LOGGER = Logger.getLogger(CustomCLIExecutor.class);
 
-    private static final int CLI_PROC_TIMEOUT = TimeoutUtil.adjust(30000);
-    private static final int STATUS_CHECK_INTERVAL = TimeoutUtil.adjust(2000);
-    private static final byte[] NEW_LINE = System.lineSeparator().getBytes(StandardCharsets.UTF_8);
+    private static final int CLI_PROC_TIMEOUT = TimeoutUtil.adjust(20000);
 
     public static String execute(File cliConfigFile, String operation) {
 
@@ -149,40 +147,24 @@ public class CustomCLIExecutor {
         final ByteArrayOutputStream err = new ByteArrayOutputStream();
         ConsoleConsumer.start(cliProc.getInputStream(), out);
         ConsoleConsumer.start(cliProc.getErrorStream(), err);
-        boolean wait = true;
-        int runningTime = 0;
+
         int exitCode = Integer.MIN_VALUE;
-        do {
-            try {
-                Thread.sleep(STATUS_CHECK_INTERVAL);
-            } catch (InterruptedException e) {
-            }
-            runningTime += STATUS_CHECK_INTERVAL;
-            try {
+
+        try{
+            boolean finished = cliProc.waitFor(CLI_PROC_TIMEOUT, TimeUnit.MILLISECONDS);
+            if(finished){
                 exitCode = cliProc.exitValue();
-                wait = false;
-            } catch (IllegalThreadStateException e) {
-                // cli still working
-                if (failureResponse != null) {
-                    try {
-                        final OutputStream stdin = cliProc.getOutputStream();
-                        stdin.write(failureResponse.getBytes(StandardCharsets.UTF_8));
-                        stdin.write(NEW_LINE);
-                        stdin.flush();
-                    } catch (IOException e1) {
-                        LOGGER.debug(out.toString(), e);
-                    }
-                }
-            }
-            if (runningTime >= CLI_PROC_TIMEOUT) {
-                cliProc.destroy();
-                wait = false;
+            } else {
                 LOGGER.info("A timeout has occurred while invoking CLI command.");
             }
-        } while (wait);
+        } catch (InterruptedException e) {
+            new RuntimeException("Interupted while waiting", e);
+        } finally {
+            cliProc.destroy();
+        }
 
-        final String cliOutput = out.toString();
-
+        // Log output
+        String cliOutput = new String(out.toByteArray());
         if (logFailure && exitCode != 0) {
             LOGGER.info("Command's output: '" + cliOutput + "'");
             if (err.size() > 0) {
