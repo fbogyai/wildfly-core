@@ -34,12 +34,13 @@ import static org.wildfly.core.test.standalone.mgmt.HTTPSManagementInterfaceTest
 
 import java.io.File;
 import java.io.IOException;
+
 import javax.inject.Inject;
 
 import org.apache.commons.io.FileUtils;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
-import org.jboss.as.test.integration.management.util.CustomCLIExecutor;
+import org.jboss.as.test.integration.management.cli.CliProcessWrapper;
 import org.jboss.as.test.integration.security.PicketBoxModuleUtil;
 import org.jboss.as.test.integration.security.common.AbstractBaseSecurityRealmsServerSetupTask;
 import org.jboss.as.test.integration.security.common.CoreUtils;
@@ -121,7 +122,13 @@ public class HTTPSConnectionWithCLITestCase {
      */
     @Test
     public void testDefaultCLIConfiguration() throws InterruptedException, IOException {
-        String cliOutput = CustomCLIExecutor.execute(null, TESTING_OPERATION, HTTPS_CONTROLLER, true, "N");
+        // String cliOutput = CustomCLIExecutor.execute(null, TESTING_OPERATION, HTTPS_CONTROLLER, true, "N");
+
+        CliProcessWrapper cli = new CliProcessWrapper()
+                .setConnection(HTTPS_CONTROLLER)
+                .addCliArgument("--command=" + TESTING_OPERATION);
+        String cliOutput = cli.executeNonInteractive();
+
         assertThat("Untrusted client should not be authenticated.", cliOutput, not(containsString("\"outcome\" => \"success\"")));
 
     }
@@ -133,7 +140,13 @@ public class HTTPSConnectionWithCLITestCase {
      */
     @Test
     public void testUntrustedCLICertificate() throws InterruptedException, IOException {
-        String cliOutput = CustomCLIExecutor.execute(UNTRUSTED_JBOSS_CLI_FILE, TESTING_OPERATION, HTTPS_CONTROLLER);
+        // String cliOutput = CustomCLIExecutor.execute(UNTRUSTED_JBOSS_CLI_FILE, TESTING_OPERATION, HTTPS_CONTROLLER);
+        CliProcessWrapper cli = new CliProcessWrapper()
+                .setCliConfig(UNTRUSTED_JBOSS_CLI_FILE.getAbsolutePath())
+                .setConnection(HTTPS_CONTROLLER)
+                .addCliArgument("--command=" + TESTING_OPERATION);
+        String cliOutput = cli.executeNonInteractive();
+
         assertThat("Untrusted client should not be authenticated.", cliOutput, not(containsString("\"outcome\" => \"success\"")));
 
     }
@@ -145,7 +158,13 @@ public class HTTPSConnectionWithCLITestCase {
      */
     @Test
     public void testTrustedCLICertificate() throws InterruptedException, IOException {
-        String cliOutput = CustomCLIExecutor.execute(TRUSTED_JBOSS_CLI_FILE, TESTING_OPERATION, HTTPS_CONTROLLER);
+        // String cliOutput = CustomCLIExecutor.execute(TRUSTED_JBOSS_CLI_FILE, TESTING_OPERATION, HTTPS_CONTROLLER);
+        CliProcessWrapper cli = new CliProcessWrapper()
+                .setCliConfig(TRUSTED_JBOSS_CLI_FILE.getAbsolutePath())
+                .setConnection(HTTPS_CONTROLLER)
+                .addCliArgument("--command=" + TESTING_OPERATION);
+        String cliOutput = cli.executeNonInteractive();
+
         assertThat("Client with valid certificate should be authenticated.", cliOutput, containsString("\"outcome\" => \"success\""));
 
     }

@@ -22,16 +22,16 @@
 
 package org.jboss.as.test.integration.management.cli;
 
-import org.jboss.as.test.shared.TestSuiteEnvironment;
-import org.wildfly.core.launcher.CliCommandBuilder;
-import org.wildfly.core.launcher.Launcher;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.fail;
+import org.jboss.as.test.shared.TestSuiteEnvironment;
+import org.wildfly.core.launcher.CliCommandBuilder;
+import org.wildfly.core.launcher.Launcher;
 
 /**
  * Creates the CLI Process
@@ -61,6 +61,11 @@ abstract class CliProcessBuilder{
 
     public CliProcessWrapper addJavaOption(String argument){
         cliCommandBuilder.addJavaOption(argument);
+        return cliProcessWrapper;
+    }
+
+    public CliProcessWrapper setConnection(String controller) {
+        cliCommandBuilder.setConnection(controller);
         return cliProcessWrapper;
     }
 

@@ -24,6 +24,7 @@ package org.jboss.as.test.manualmode.management.cli;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.READ_ATTRIBUTE_OPERATION;
+//import static org.jboss.as.test.integration.management.util.CustomCLIExecutor.HTTPS_CONTROLLER;
 import static org.junit.Assert.assertThat;
 
 import java.io.File;
@@ -32,11 +33,13 @@ import java.io.IOException;
 import javax.inject.Inject;
 
 import org.apache.commons.io.FileUtils;
-import org.jboss.as.test.integration.management.util.CustomCLIExecutor;
+import org.jboss.as.test.integration.management.cli.CliProcessWrapper;
+//import org.jboss.as.test.integration.management.util.CustomCLIExecutor;
 import org.jboss.as.test.integration.security.PicketBoxModuleUtil;
 import org.jboss.as.test.integration.security.common.CoreUtils;
 import org.jboss.as.test.integration.security.common.SecurityTestConstants;
 import org.jboss.as.test.module.util.TestModule;
+import org.jboss.as.test.shared.TestSuiteEnvironment;
 import org.jboss.logging.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -105,7 +108,12 @@ public class CustomVaultInCLITestCase {
     @Test
     public void testRightVaultPassword() throws Exception {
 
-        String cliOutput = CustomCLIExecutor.execute(RIGHT_VAULT_PASSWORD_FILE, READ_ATTRIBUTE_OPERATION + " server-state");
+        //String cliOutput = CustomCLIExecutor.execute(RIGHT_VAULT_PASSWORD_FILE, READ_ATTRIBUTE_OPERATION + " server-state");
+        CliProcessWrapper cli = new CliProcessWrapper()
+                .setCliConfig(RIGHT_VAULT_PASSWORD_FILE.getAbsolutePath())
+                .setConnection(TestSuiteEnvironment.getServerAddress() + ":" + TestSuiteEnvironment.getServerPort())
+                .addCliArgument("--command=" + READ_ATTRIBUTE_OPERATION + " server-state");
+        String cliOutput = cli.executeNonInteractive();
 
         assertThat("Password should be right", cliOutput, containsString("Password is: " + RIGHT_PASSWORD));
         assertThat("CLI should successfully initialize ", cliOutput, containsString("running"));
@@ -119,7 +127,12 @@ public class CustomVaultInCLITestCase {
     @Test
     public void testWrongVaultPassword() throws Exception {
 
-        String cliOutput = CustomCLIExecutor.execute(WRONG_VAULT_PASSWORD_FILE, READ_ATTRIBUTE_OPERATION + " server-state");
+        //String cliOutput = CustomCLIExecutor.execute(WRONG_VAULT_PASSWORD_FILE, READ_ATTRIBUTE_OPERATION + " server-state");
+        CliProcessWrapper cli = new CliProcessWrapper()
+                .setCliConfig(WRONG_VAULT_PASSWORD_FILE.getAbsolutePath())
+                .setConnection(TestSuiteEnvironment.getServerAddress() + ":" + TestSuiteEnvironment.getServerPort())
+                .addCliArgument("--command=" + READ_ATTRIBUTE_OPERATION + " server-state");
+        String cliOutput = cli.executeNonInteractive();
 
         assertThat("Password should be wrong", cliOutput, containsString("Password is: " + WRONG_PASSWORD));
         assertThat("CLI shouldn't successfully initialize ", cliOutput, containsString("Keystore was tampered with, or password was incorrect"));
@@ -133,7 +146,12 @@ public class CustomVaultInCLITestCase {
     @Test
     public void testNonExistingVaultPassword() throws Exception {
 
-        String cliOutput = CustomCLIExecutor.execute(NON_EXISTING_VAULT_PASSWORD_FILE, READ_ATTRIBUTE_OPERATION + " server-state");
+        //String cliOutput = CustomCLIExecutor.execute(NON_EXISTING_VAULT_PASSWORD_FILE, READ_ATTRIBUTE_OPERATION + " server-state");
+        CliProcessWrapper cli = new CliProcessWrapper()
+                .setCliConfig(NON_EXISTING_VAULT_PASSWORD_FILE.getAbsolutePath())
+                .setConnection(TestSuiteEnvironment.getServerAddress() + ":" + TestSuiteEnvironment.getServerPort())
+                .addCliArgument("--command=" + READ_ATTRIBUTE_OPERATION + " server-state");
+        String cliOutput = cli.executeNonInteractive();
 
         assertThat("Password should not exists", cliOutput, containsString("NullPointerException"));
 

@@ -30,12 +30,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+
 import javax.inject.Inject;
 
 import org.apache.commons.io.FileUtils;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
-import org.jboss.as.test.integration.management.util.CustomCLIExecutor;
+import org.jboss.as.test.integration.management.cli.CliProcessWrapper;
 import org.jboss.as.test.integration.security.PicketBoxModuleUtil;
 import org.jboss.as.test.integration.security.common.AbstractBaseSecurityRealmsServerSetupTask;
 import org.jboss.as.test.integration.security.common.CoreUtils;
@@ -130,7 +131,13 @@ public class VaultPasswordsInCLITestCase {
     @Test
     public void testWrongVaultPassword() throws InterruptedException, IOException {
 
-        String cliOutput = CustomCLIExecutor.execute(WRONG_VAULT_PASSWORD_FILE, TESTING_OPERATION);
+        // String cliOutput = CustomCLIExecutor.execute(WRONG_VAULT_PASSWORD_FILE, TESTING_OPERATION);
+        CliProcessWrapper cli = new CliProcessWrapper()
+                .setCliConfig(WRONG_VAULT_PASSWORD_FILE.getAbsolutePath())
+                .setConnection(TestSuiteEnvironment.getServerAddress() + ":" + TestSuiteEnvironment.getServerPort())
+                .addCliArgument("--command=" + TESTING_OPERATION);
+        String cliOutput = cli.executeNonInteractive();
+
         assertThat("Password should be wrong", cliOutput, containsString("Keystore was tampered with, or password was incorrect"));
 
     }
@@ -143,7 +150,13 @@ public class VaultPasswordsInCLITestCase {
     @Test
     public void testRightVaultPassword() throws InterruptedException, IOException {
 
-        String cliOutput = CustomCLIExecutor.execute(RIGHT_VAULT_PASSWORD_FILE, TESTING_OPERATION);
+        // String cliOutput = CustomCLIExecutor.execute(RIGHT_VAULT_PASSWORD_FILE, TESTING_OPERATION);
+        CliProcessWrapper cli = new CliProcessWrapper()
+                .setCliConfig(RIGHT_VAULT_PASSWORD_FILE.getAbsolutePath())
+                .setConnection(TestSuiteEnvironment.getServerAddress() + ":" + TestSuiteEnvironment.getServerPort())
+                .addCliArgument("--command=" + TESTING_OPERATION);
+        String cliOutput = cli.executeNonInteractive();
+
         assertThat("Password should be right and authentication successful", cliOutput, containsString("\"outcome\" => \"success\""));
 
     }
